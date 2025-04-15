@@ -1,0 +1,2170 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小峰峰-图片管理工具箱</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            height: 100vh;
+            overflow: hidden;
+            font-size: 14px;
+        }
+
+        .app-container {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* 左侧边栏样式 */
+        .sidebar {
+            width: 60px;
+            height: 100%;
+            background-color: #2c3e50;
+            transition: width 0.3s ease;
+            overflow: hidden;
+            position: relative;
+            z-index: 100;
+        }
+
+        .sidebar:hover {
+            width: 250px;
+        }
+
+        .sidebar-item {
+            padding: 14px 20px;
+            color: #ecf0f1;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+            font-size: 15px;
+        }
+
+        .sidebar-item:hover {
+            background-color: #34495e;
+        }
+
+        .sidebar-item i {
+            margin-right: 15px;
+            font-size: 18px;
+            width: 20px;
+            text-align: center;
+        }
+
+        .sidebar-item span {
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .sidebar:hover .sidebar-item span {
+            opacity: 1;
+        }
+
+        .sidebar-group {
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .sidebar-group-title {
+            padding: 10px 20px;
+            color: #bdc3c7;
+            font-size: 13px;
+            text-transform: uppercase;
+            display: none;
+        }
+
+        .sidebar:hover .sidebar-group-title {
+            display: block;
+        }
+
+        /* 日期筛选样式 */
+        .date-filter {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+            background-color: #34495e;
+        }
+
+        .date-filter-item {
+            padding: 10px 20px 10px 55px;
+            color: #ecf0f1;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s;
+        }
+
+        .date-filter-item:hover {
+            background-color: #3d566e;
+        }
+
+        .date-filter-item.active {
+            background-color: #3498db;
+        }
+
+        .sidebar-item.active + .date-filter {
+            max-height: 500px;
+        }
+
+        /* 主内容区样式 */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        /* 头部样式 */
+        .header {
+            padding: 15px 20px;
+            background-color: #fff;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 10;
+        }
+
+        .header h1 {
+            font-size: 18px;
+            color: #2c3e50;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        /* 上传区域样式 */
+        .upload-area {
+            position: relative;
+            margin: 12px 15px;
+            transition: all 0.3s;
+            opacity: 0;
+            height: 0;
+            overflow: hidden;
+        }
+
+        .upload-area.visible {
+            opacity: 1;
+            height: auto;
+            margin: 12px 15px;
+        }
+
+        .upload-container {
+            border: 2px dashed #bdc3c7;
+            border-radius: 6px;
+            padding: 22px;
+            text-align: center;
+            background-color: #fff;
+            transition: all 0.3s;
+        }
+
+        .upload-container:hover {
+            border-color: #3498db;
+        }
+
+        .upload-container i {
+            font-size: 38px;
+            color: #bdc3c7;
+            margin-bottom: 10px;
+        }
+
+        .upload-container p {
+            color: #7f8c8d;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .upload-btn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            font-size: 14px;
+        }
+
+        .upload-btn:hover {
+            background-color: #2980b9;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        /* 搜索区域样式 */
+        .search-area {
+            padding: 0 15px 10px;
+            display: none;
+            transition: all 0.3s;
+        }
+
+        .search-container {
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .search-input:focus {
+            border-color: #3498db;
+        }
+
+        .search-icon {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #7f8c8d;
+            font-size: 15px;
+        }
+
+        /* 表格区域样式 */
+        .table-container {
+            flex: 1;
+            overflow: auto;
+            padding: 0 15px 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: #fff;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        th, td {
+            padding: 12px 10px;
+            text-align: center;
+            border-bottom: 1px solid #eee;
+            font-size: 14px;
+        }
+
+        th {
+            background-color: #3498db;
+            color: white;
+            font-weight: 500;
+            position: sticky;
+            top: 0;
+            font-size: 14px;
+            padding: 12px 10px;
+        }
+
+        tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        .thumbnail {
+            width: 40px;
+            height: 40px;
+            object-fit: cover;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .thumbnail:hover {
+            transform: scale(1.05);
+        }
+
+        .preview-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .preview-container.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .preview-img {
+            max-width: 800px;
+            max-height: 800px;
+            object-fit: contain;
+        }
+
+        .close-preview {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            color: white;
+            font-size: 30px;
+            cursor: pointer;
+        }
+
+        .notes-input {
+            width: 100%;
+            min-width: 200px;
+            padding: 8px 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            outline: none;
+            transition: border-color 0.3s;
+            font-size: 14px;
+        }
+
+        .notes-input:focus {
+            border-color: #3498db;
+        }
+
+        .delete-btn {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            font-size: 14px;
+            white-space: nowrap;
+        }
+
+        .delete-btn:hover {
+            background-color: #c0392b;
+        }
+
+        /* 排序按钮样式 */
+        .sort-btn {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            margin-left: 5px;
+            font-size: 12px;
+            transition: transform 0.2s;
+        }
+
+        .sort-btn:hover {
+            transform: scale(1.2);
+        }
+
+        .sort-btn.active {
+            color: #f1c40f;
+        }
+
+        /* 分页样式 */
+        .pagination {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            background-color: #fff;
+            border-top: 1px solid #eee;
+        }
+
+        .page-info {
+            color: #7f8c8d;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .page-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .page-btn {
+            padding: 6px 12px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+
+        .page-btn:hover {
+            background-color: #2980b9;
+        }
+
+        .page-btn:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+        }
+
+        .page-number {
+            padding: 6px 10px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+
+        .page-number:hover {
+            background-color: #e0e0e0;
+        }
+
+        .page-number.active {
+            background-color: #3498db;
+            color: white;
+        }
+
+        .page-ellipsis {
+            padding: 6px 5px;
+            font-size: 14px;
+        }
+
+        .page-jump {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-left: 10px;
+        }
+
+        .page-jump-input {
+            width: 50px;
+            padding: 6px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        .page-jump-btn {
+            padding: 6px 10px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .page-jump-btn:hover {
+            background-color: #2980b9;
+        }
+
+        /* 高亮搜索结果 */
+        .highlight {
+            background-color: #fffacd;
+            color: #e67e22;
+            font-weight: bold;
+        }
+
+        /* 序号列样式 */
+        .index-cell {
+            color: #7f8c8d;
+            width: 60px;
+            white-space: nowrap;
+        }
+
+        /* 确认对话框样式 */
+        .confirm-dialog {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .confirm-dialog.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .confirm-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 6px;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .confirm-message {
+            margin-bottom: 20px;
+            font-size: 16px;
+            color: #333;
+        }
+
+        .confirm-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .confirm-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+
+        .confirm-btn.cancel {
+            background-color: #e0e0e0;
+            color: #333;
+        }
+
+        .confirm-btn.cancel:hover {
+            background-color: #d0d0d0;
+        }
+
+        .confirm-btn.confirm {
+            background-color: #e74c3c;
+            color: white;
+        }
+
+        .confirm-btn.confirm:hover {
+            background-color: #c0392b;
+        }
+
+        /* 日期选择器样式 */
+        .date-picker {
+            display: none;
+            position: absolute;
+            left: 250px;
+            top: 0;
+            width: 220px;
+            background: #fff;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            border-radius: 4px;
+            padding: 10px;
+            z-index: 200;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .date-picker.show {
+            display: block;
+        }
+        
+        .date-picker-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .date-picker-title {
+            font-weight: bold;
+            color: #2c3e50;
+            font-size: 14px;
+        }
+        
+        .date-picker-nav {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .date-picker-nav-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #3498db;
+            font-size: 14px;
+        }
+        
+        .date-picker-body {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+        }
+        
+        .date-picker-weekdays {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+            margin-bottom: 5px;
+            font-size: 12px;
+            color: #7f8c8d;
+        }
+        
+        .date-picker-item {
+            padding: 8px 0;
+            text-align: center;
+            cursor: pointer;
+            border-radius: 3px;
+            transition: all 0.2s;
+            font-size: 13px;
+        }
+        
+        .date-picker-item:hover {
+            background-color: #3498db;
+            color: white;
+        }
+        
+        .date-picker-item.active {
+            background-color: #2980b9;
+            color: white;
+        }
+        
+        .date-picker-item.disabled {
+            color: #bdc3c7;
+            cursor: not-allowed;
+        }
+        
+        .date-picker-item.other-month {
+            color: #bdc3c7;
+        }
+        
+        /* 存储空间提示 */
+        .storage-info {
+            position: absolute;
+            bottom: 10px;
+            left: 20px;
+            color: #bdc3c7;
+            font-size: 11px;
+            display: none;
+            width: calc(100% - 40px);
+        }
+        
+        .sidebar:hover .storage-info {
+            display: block;
+        }
+        
+        .storage-details {
+            margin-bottom: 5px;
+        }
+        
+        .storage-details span {
+            display: inline-block;
+            margin-right: 8px;
+        }
+        
+        .storage-bar {
+            height: 3px;
+            background: rgba(255,255,255,0.2);
+            margin-top: 5px;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        
+        .storage-progress {
+            height: 100%;
+            background: #3498db;
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        /* 批量删除控件 - 增强样式 */
+        .delete-controls {
+            display: flex;
+            gap: 10px;
+            margin-left: auto;
+            align-items: center;
+            padding: 8px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            border: 1px solid #eee;
+        }
+
+        .delete-input {
+            width: 60px;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            text-align: center;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .bulk-delete-btn {
+            background-color: #e74c3c !important;
+            color: white !important;
+            border: none;
+            padding: 8px 15px !important;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+            font-weight: bold;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            white-space: nowrap;
+        }
+
+        .bulk-delete-btn:hover {
+            background-color: #c0392b !important;
+            transform: translateY(-1px);
+            box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+        }
+
+        /* 响应式调整 */
+        @media (max-width: 768px) {
+            body {
+                font-size: 13px;
+            }
+            
+            .sidebar {
+                width: 0;
+            }
+            
+            .sidebar:hover {
+                width: 220px;
+            }
+            
+            th, td {
+                padding: 10px 8px;
+                font-size: 13px;
+            }
+            
+            .thumbnail {
+                width: 36px;
+                height: 36px;
+            }
+            
+            .notes-input {
+                min-width: 150px;
+                font-size: 13px;
+            }
+            
+            .page-controls {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            .date-filter-item {
+                padding: 8px 20px 8px 45px;
+                font-size: 13px;
+            }
+            
+            .page-jump {
+                margin-left: 5px;
+            }
+            
+            .page-jump-input {
+                width: 40px;
+                font-size: 13px;
+            }
+
+            .date-picker {
+                left: 220px;
+                width: 200px;
+            }
+
+            .delete-controls {
+                order: -1;
+                width: 100%;
+                justify-content: center;
+                margin-bottom: 10px;
+                background: none;
+                border: none;
+                padding: 5px 0;
+            }
+            
+            .bulk-delete-btn {
+                padding: 6px 10px !important;
+                font-size: 13px;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- 左侧边栏 -->
+        <div class="sidebar">
+            <div class="sidebar-group">
+                <div class="sidebar-group-title">操作</div>
+                <div class="sidebar-item" id="uploadSidebarItem">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <span>上传图片</span>
+                </div>
+                <div class="sidebar-item" id="searchSidebarItem">
+                    <i class="fas fa-search"></i>
+                    <span>搜索图片</span>
+                </div>
+            </div>
+            
+            <div class="sidebar-group">
+                <div class="sidebar-group-title">时间筛选</div>
+                <div class="sidebar-item" id="dateFilterItem">
+                    <i class="far fa-calendar-alt"></i>
+                    <span>日期筛选</span>
+                </div>
+                <div class="date-filter" id="dateFilter">
+                    <div class="date-filter-item active" data-filter="all">全部时间</div>
+                    <div class="date-filter-item" data-filter="year">按年筛选</div>
+                    <div class="date-filter-item" data-filter="month">按月筛选</div>
+                    <div class="date-filter-item" data-filter="day">按日筛选</div>
+                    <div class="date-filter-item" data-filter="week">按周筛选</div>
+                    <div class="date-filter-item" data-filter="am">上午(00:00-12:00)</div>
+                    <div class="date-filter-item" data-filter="pm">下午(12:00-24:00)</div>
+                    <div class="date-filter-item" data-filter="today">今天</div>
+                    <div class="date-filter-item" data-filter="yesterday">昨天</div>
+                    <div class="date-filter-item" data-filter="thisweek">本周</div>
+                    <div class="date-filter-item" data-filter="thismonth">本月</div>
+                </div>
+            </div>
+
+            <!-- 存储空间信息 -->
+            <div class="storage-info">
+                <div class="storage-details">
+                    <span id="storageUsed">已用: 0.000 MB</span>
+                    <span id="storageRemaining">剩余: 0.000 MB</span>
+                </div>
+                <div class="storage-bar">
+                    <div class="storage-progress" id="storageBar"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 主内容区 -->
+        <div class="main-content">
+            <!-- 头部 -->
+            <div class="header">
+                <h1>小峰峰-图片管理工具箱</h1>
+            </div>
+
+            <!-- 上传区域 -->
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-container" id="uploadContainer">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <p>拖放图片到此处或点击上传</p>
+                    <button class="upload-btn" id="uploadBtn">选择图片</button>
+                    <input type="file" id="fileInput" accept="image/*" multiple>
+                </div>
+            </div>
+
+            <!-- 搜索区域 -->
+            <div class="search-area" id="searchArea">
+                <div class="search-container">
+                    <input type="text" class="search-input" id="searchInput" placeholder="搜索图片名称或备注内容...">
+                    <i class="fas fa-search search-icon"></i>
+                </div>
+            </div>
+
+            <!-- 表格区域 -->
+            <div class="table-container">
+                <table id="imageTable">
+                    <thead>
+                        <tr>
+                            <th style="width: 60px;">序号</th>
+                            <th style="width: 60px;">图片</th>
+                            <th style="width: 180px;">图片名称</th>
+                            <th style="width: 150px;">
+                                上传时间
+                                <button class="sort-btn" id="sortTimeBtn" title="排序">
+                                    <i class="fas fa-sort"></i>
+                                </button>
+                            </th>
+                            <th>备注</th>
+                            <th style="width: 80px;">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <!-- 数据将通过JavaScript动态添加 -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 分页控制 -->
+            <div class="pagination">
+                <div class="page-info" id="pageInfo">
+                    <span>第 1 页，共 1 页</span>
+                    <div class="page-jump">
+                        <span>跳转至</span>
+                        <input type="number" min="1" class="page-jump-input" id="pageJumpInput">
+                        <button class="page-jump-btn" id="pageJumpBtn">确定</button>
+                    </div>
+                </div>
+                <div class="page-controls" id="pageNumbers">
+                    <button class="page-btn" id="prevPage" disabled>上一页</button>
+                    <div class="delete-controls">
+                        <input type="number" class="delete-input" id="deletePageInput" placeholder="页数" min="1">
+                        <button class="bulk-delete-btn" id="deletePageBtn">删页</button>
+                        <button class="bulk-delete-btn" id="deleteCurrentPageBtn">删本页</button>
+                        <button class="bulk-delete-btn" id="deleteAllBtn">删全部</button>
+                    </div>
+                    <button class="page-btn" id="nextPage" disabled>下一页</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 图片预览容器 -->
+        <div class="preview-container" id="previewContainer">
+            <span class="close-preview" id="closePreview">&times;</span>
+            <img class="preview-img" id="previewImg" src="" alt="预览图片">
+        </div>
+
+        <!-- 确认对话框 -->
+        <div class="confirm-dialog" id="confirmDialog">
+            <div class="confirm-content">
+                <div class="confirm-message" id="confirmMessage">确定要删除这条记录吗？</div>
+                <div class="confirm-buttons">
+                    <button class="confirm-btn cancel" id="cancelDelete">取消</button>
+                    <button class="confirm-btn confirm" id="confirmDelete">确定</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 日期选择器 -->
+        <div class="date-picker" id="yearPicker">
+            <div class="date-picker-header">
+                <div class="date-picker-title">选择年份</div>
+            </div>
+            <div class="date-picker-body" id="yearList"></div>
+        </div>
+        
+        <div class="date-picker" id="monthPicker">
+            <div class="date-picker-header">
+                <div class="date-picker-title">选择月份</div>
+            </div>
+            <div class="date-picker-body" id="monthList"></div>
+        </div>
+        
+        <div class="date-picker" id="dayPicker">
+            <div class="date-picker-header">
+                <div class="date-picker-title" id="dayPickerTitle">选择日期</div>
+                <div class="date-picker-nav">
+                    <button class="date-picker-nav-btn" id="prevMonthBtn"><i class="fas fa-chevron-left"></i></button>
+                    <button class="date-picker-nav-btn" id="nextMonthBtn"><i class="fas fa-chevron-right"></i></button>
+                </div>
+            </div>
+            <div class="date-picker-weekdays">
+                <div>日</div>
+                <div>一</div>
+                <div>二</div>
+                <div>三</div>
+                <div>四</div>
+                <div>五</div>
+                <div>六</div>
+            </div>
+            <div class="date-picker-body" id="dayList"></div>
+        </div>
+        
+        <div class="date-picker" id="weekPicker">
+            <div class="date-picker-header">
+                <div class="date-picker-title" id="weekPickerTitle">选择周数</div>
+                <div class="date-picker-nav">
+                    <button class="date-picker-nav-btn" id="prevYearBtn"><i class="fas fa-chevron-left"></i></button>
+                    <button class="date-picker-nav-btn" id="nextYearBtn"><i class="fas fa-chevron-right"></i></button>
+                </div>
+            </div>
+            <div class="date-picker-body" id="weekList"></div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 获取DOM元素
+            const uploadArea = document.getElementById('uploadArea');
+            const uploadContainer = document.getElementById('uploadContainer');
+            const uploadBtn = document.getElementById('uploadBtn');
+            const fileInput = document.getElementById('fileInput');
+            const tableBody = document.getElementById('tableBody');
+            const previewContainer = document.getElementById('previewContainer');
+            const previewImg = document.getElementById('previewImg');
+            const closePreview = document.getElementById('closePreview');
+            const uploadSidebarItem = document.getElementById('uploadSidebarItem');
+            const searchSidebarItem = document.getElementById('searchSidebarItem');
+            const searchArea = document.getElementById('searchArea');
+            const searchInput = document.getElementById('searchInput');
+            const prevPageBtn = document.getElementById('prevPage');
+            const nextPageBtn = document.getElementById('nextPage');
+            const pageInfo = document.getElementById('pageInfo');
+            const pageNumbers = document.getElementById('pageNumbers');
+            const confirmDialog = document.getElementById('confirmDialog');
+            const confirmMessage = document.getElementById('confirmMessage');
+            const cancelDelete = document.getElementById('cancelDelete');
+            const confirmDelete = document.getElementById('confirmDelete');
+            const dateFilterItem = document.getElementById('dateFilterItem');
+            const dateFilter = document.getElementById('dateFilter');
+            const dateFilterItems = document.querySelectorAll('.date-filter-item');
+            const sortTimeBtn = document.getElementById('sortTimeBtn');
+            const pageJumpInput = document.getElementById('pageJumpInput');
+            const pageJumpBtn = document.getElementById('pageJumpBtn');
+            const yearPicker = document.getElementById('yearPicker');
+            const monthPicker = document.getElementById('monthPicker');
+            const dayPicker = document.getElementById('dayPicker');
+            const weekPicker = document.getElementById('weekPicker');
+            const yearList = document.getElementById('yearList');
+            const monthList = document.getElementById('monthList');
+            const dayList = document.getElementById('dayList');
+            const weekList = document.getElementById('weekList');
+            const dayPickerTitle = document.getElementById('dayPickerTitle');
+            const weekPickerTitle = document.getElementById('weekPickerTitle');
+            const prevMonthBtn = document.getElementById('prevMonthBtn');
+            const nextMonthBtn = document.getElementById('nextMonthBtn');
+            const prevYearBtn = document.getElementById('prevYearBtn');
+            const nextYearBtn = document.getElementById('nextYearBtn');
+            const storageUsed = document.getElementById('storageUsed');
+            const storageRemaining = document.getElementById('storageRemaining');
+            const storageBar = document.getElementById('storageBar');
+            const deletePageInput = document.getElementById('deletePageInput');
+            const deletePageBtn = document.getElementById('deletePageBtn');
+            const deleteCurrentPageBtn = document.getElementById('deleteCurrentPageBtn');
+            const deleteAllBtn = document.getElementById('deleteAllBtn');
+
+            // 分页相关变量
+            let currentPage = 1;
+            const itemsPerPage = 10;
+            let allImages = [];
+            let filteredImages = [];
+            let previewTimeout = null;
+            let deleteIndex = -1;
+            let currentFilter = 'all';
+            let currentSearchTerm = '';
+            let sortDirection = 'desc'; // 默认降序
+            let db; // IndexedDB实例
+            let currentDayMonth = new Date().getMonth();
+            let currentDayYear = new Date().getFullYear();
+            let currentWeekYear = new Date().getFullYear();
+            let currentDeleteType = ''; // 'page', 'current', 'all'
+
+            // 初始化IndexedDB
+            function initDB() {
+                return new Promise((resolve, reject) => {
+                    const request = indexedDB.open('ImageGalleryDB', 1);
+                    
+                    request.onerror = function(event) {
+                        console.error('数据库打开失败:', event.target.error);
+                        // 回退到LocalStorage
+                        if(!localStorage.getItem('imageGallery')) {
+                            localStorage.setItem('imageGallery', JSON.stringify([]));
+                        }
+                        resolve(false);
+                    };
+                    
+                    request.onsuccess = function(event) {
+                        db = event.target.result;
+                        updateStorageInfo();
+                        resolve(true);
+                    };
+                    
+                    request.onupgradeneeded = function(event) {
+                        const db = event.target.result;
+                        if (!db.objectStoreNames.contains('images')) {
+                            const store = db.createObjectStore('images', { keyPath: 'id', autoIncrement: true });
+                            store.createIndex('uploadTime', 'uploadTime', { unique: false });
+                        }
+                    };
+                });
+            }
+            
+            // 更新存储空间信息
+            async function updateStorageInfo() {
+                try {
+                    if (navigator.storage && navigator.storage.estimate) {
+                        const estimate = await navigator.storage.estimate();
+                        const usedMB = (estimate.usage / 1048576).toFixed(3);
+                        const quotaMB = (estimate.quota / 1048576).toFixed(3);
+                        const remainingMB = ((estimate.quota - estimate.usage) / 1048576).toFixed(3);
+                        
+                        storageUsed.textContent = `已用: ${usedMB} MB`;
+                        storageRemaining.textContent = `剩余: ${remainingMB} MB`;
+                        storageBar.style.width = `${(estimate.usage / estimate.quota * 100).toFixed(1)}%`;
+                        
+                        // 颜色状态
+                        const percent = estimate.usage / estimate.quota;
+                        storageBar.style.background = percent > 0.9 ? '#e74c3c' : 
+                                                    percent > 0.7 ? '#f39c12' : '#3498db';
+                    } else {
+                        // 浏览器不支持storage.estimate API
+                        storageUsed.textContent = '已用: 未知';
+                        storageRemaining.textContent = '剩余: 未知';
+                        storageBar.style.width = '0%';
+                    }
+                } catch (e) {
+                    console.error('获取存储信息失败:', e);
+                    storageUsed.textContent = '已用: 错误';
+                    storageRemaining.textContent = '剩余: 错误';
+                    storageBar.style.width = '0%';
+                }
+            }
+
+            // 从本地存储加载数据
+            async function loadImages() {
+                const dbAvailable = await initDB();
+                
+                if (dbAvailable) {
+                    // 从IndexedDB加载
+                    const transaction = db.transaction(['images'], 'readonly');
+                    const store = transaction.objectStore('images');
+                    const request = store.getAll();
+                    
+                    request.onsuccess = function() {
+                        allImages = request.result || [];
+                        // 预处理数据，添加日期对象以便快速筛选和排序
+                        allImages.forEach(img => {
+                            if (!img.dateObj && img.uploadTime) {
+                                img.dateObj = new Date(img.uploadTime.replace(/-/g, '/'));
+                            }
+                        });
+                        sortImages();
+                        applyFilters();
+                    };
+                    
+                    request.onerror = function(event) {
+                        console.error('加载数据失败:', event.target.error);
+                        allImages = [];
+                        filteredImages = [];
+                        updateTable();
+                    };
+                } else {
+                    // 回退到LocalStorage
+                    const savedImages = localStorage.getItem('imageGallery');
+                    if (savedImages) {
+                        try {
+                            allImages = JSON.parse(savedImages) || [];
+                            // 预处理数据
+                            allImages.forEach(img => {
+                                if (!img.dateObj && img.uploadTime) {
+                                    img.dateObj = new Date(img.uploadTime.replace(/-/g, '/'));
+                                }
+                            });
+                            sortImages();
+                            applyFilters();
+                        } catch (e) {
+                            console.error('解析本地存储数据失败:', e);
+                            allImages = [];
+                            filteredImages = [];
+                            updateTable();
+                        }
+                    } else {
+                        allImages = [];
+                        filteredImages = [];
+                        updateTable();
+                    }
+                }
+            }
+
+            // 排序图片数据
+            function sortImages() {
+                allImages.sort((a, b) => {
+                    return sortDirection === 'asc' 
+                        ? a.dateObj - b.dateObj 
+                        : b.dateObj - a.dateObj;
+                });
+                
+                // 更新排序按钮图标
+                updateSortButton();
+            }
+
+            // 更新排序按钮状态
+            function updateSortButton() {
+                sortTimeBtn.innerHTML = sortDirection === 'asc' 
+                    ? '<i class="fas fa-sort-up"></i>' 
+                    : '<i class="fas fa-sort-down"></i>';
+            }
+
+            // 保存数据到本地存储
+            async function saveImages() {
+                if (db) {
+                    const transaction = db.transaction(['images'], 'readwrite');
+                    const store = transaction.objectStore('images');
+                    
+                    // 清空原有数据
+                    store.clear();
+                    
+                    // 添加新数据
+                    allImages.forEach(image => {
+                        store.add(image);
+                    });
+                    
+                    await updateStorageInfo();
+                } else {
+                    // 回退到LocalStorage
+                    try {
+                        localStorage.setItem('imageGallery', JSON.stringify(allImages));
+                    } catch (e) {
+                        console.error('存储数据失败:', e);
+                        if (e.name === 'QuotaExceededError') {
+                            alert('本地存储空间不足，请删除一些图片或使用支持IndexedDB的浏览器');
+                        }
+                    }
+                }
+            }
+
+            // 应用筛选条件
+            function applyFilters(keepPage = false) {
+                let result = [...allImages];
+                
+                if (currentFilter.startsWith('year:')) {
+                    const year = parseInt(currentFilter.split(':')[1]);
+                    result = result.filter(img => img.dateObj.getFullYear() === year);
+                } 
+                else if (currentFilter.startsWith('month:')) {
+                    const parts = currentFilter.split(':');
+                    const year = parseInt(parts[1]);
+                    const month = parseInt(parts[2]);
+                    result = result.filter(img => 
+                        img.dateObj.getFullYear() === year && 
+                        img.dateObj.getMonth() + 1 === month
+                    );
+                }
+                else if (currentFilter.startsWith('day:')) {
+                    const parts = currentFilter.split(':');
+                    const year = parseInt(parts[1]);
+                    const month = parseInt(parts[2]);
+                    const day = parseInt(parts[3]);
+                    result = result.filter(img => 
+                        img.dateObj.getFullYear() === year && 
+                        img.dateObj.getMonth() + 1 === month &&
+                        img.dateObj.getDate() === day
+                    );
+                }
+                else if (currentFilter.startsWith('week:')) {
+                    const parts = currentFilter.split(':');
+                    const year = parseInt(parts[1]);
+                    const week = parseInt(parts[2]);
+                    result = result.filter(img => {
+                        const date = new Date(img.dateObj);
+                        date.setHours(0, 0, 0, 0);
+                        date.setDate(date.getDate() + 3 - (date.getDay() + 6) % 7);
+                        const week1 = new Date(date.getFullYear(), 0, 4);
+                        return Math.round(((date - week1) / 86400000 + week1.getDay() + 1) / 7) === week &&
+                               date.getFullYear() === year;
+                    });
+                }
+                else if (currentFilter !== 'all') {
+                    const now = new Date();
+                    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                    const yesterday = new Date(today);
+                    yesterday.setDate(yesterday.getDate() - 1);
+                    
+                    const thisWeekStart = new Date(today);
+                    thisWeekStart.setDate(thisWeekStart.getDate() - thisWeekStart.getDay());
+                    
+                    const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+                    
+                    result = result.filter(img => {
+                        const date = img.dateObj;
+                        const hours = date.getHours();
+                        
+                        switch(currentFilter) {
+                            case 'year':
+                                return date.getFullYear() === now.getFullYear();
+                            case 'month':
+                                return date.getFullYear() === now.getFullYear() && 
+                                       date.getMonth() === now.getMonth();
+                            case 'day':
+                                return date.getFullYear() === now.getFullYear() && 
+                                       date.getMonth() === now.getMonth() && 
+                                       date.getDate() === now.getDate();
+                            case 'week':
+                                return date >= thisWeekStart && date <= now;
+                            case 'am':
+                                return hours >= 0 && hours < 12;
+                            case 'pm':
+                                return hours >= 12 && hours < 24;
+                            case 'today':
+                                return date >= today && date <= now;
+                            case 'yesterday':
+                                return date >= yesterday && date < today;
+                            case 'thisweek':
+                                return date >= thisWeekStart && date <= now;
+                            case 'thismonth':
+                                return date >= thisMonthStart && date <= now;
+                            default:
+                                return true;
+                        }
+                    });
+                }
+                
+                // 应用搜索筛选
+                if (currentSearchTerm) {
+                    const term = currentSearchTerm.toLowerCase();
+                    result = result.filter(image => 
+                        image.name.toLowerCase().includes(term) || 
+                        (image.notes && image.notes.toLowerCase().includes(term))
+                    );
+                }
+                
+                filteredImages = result;
+                
+                // 只有明确要求时才重置页码
+                if (!keepPage) {
+                    currentPage = 1;
+                }
+                
+                // 确保当前页码不超过最大页码
+                const maxPage = Math.ceil(filteredImages.length / itemsPerPage);
+                if (currentPage > maxPage && maxPage > 0) {
+                    currentPage = maxPage;
+                }
+                
+                updateTable();
+            }
+
+            // 更新表格显示
+            function updateTable() {
+                // 计算分页
+                const startIndex = (currentPage - 1) * itemsPerPage;
+                const endIndex = startIndex + itemsPerPage;
+                const pageImages = filteredImages.slice(startIndex, endIndex);
+                
+                // 使用文档片段提高性能
+                const fragment = document.createDocumentFragment();
+                
+                // 添加行
+                pageImages.forEach((image, index) => {
+                    const row = document.createElement('tr');
+                    const globalIndex = startIndex + index + 1;
+                    
+                    // 序号单元格
+                    const indexCell = document.createElement('td');
+                    indexCell.textContent = globalIndex;
+                    indexCell.className = 'index-cell';
+                    row.appendChild(indexCell);
+                    
+                    // 缩略图单元格
+                    const imgCell = document.createElement('td');
+                    const img = document.createElement('img');
+                    img.src = image.thumbnail;
+                    img.className = 'thumbnail';
+                    img.dataset.full = image.full;
+                    imgCell.appendChild(img);
+                    row.appendChild(imgCell);
+                    
+                    // 图片名称单元格
+                    const nameCell = document.createElement('td');
+                    nameCell.textContent = image.name;
+                    nameCell.className = 'name-cell';
+                    row.appendChild(nameCell);
+                    
+                    // 上传时间单元格
+                    const timeCell = document.createElement('td');
+                    timeCell.textContent = image.uploadTime;
+                    row.appendChild(timeCell);
+                    
+                    // 备注单元格
+                    const notesCell = document.createElement('td');
+                    const notesInput = document.createElement('input');
+                    notesInput.type = 'text';
+                    notesInput.className = 'notes-input';
+                    notesInput.value = image.notes || '';
+                    notesInput.dataset.index = allImages.findIndex(item => item.id === image.id);
+                    notesCell.appendChild(notesInput);
+                    row.appendChild(notesCell);
+                    
+                    // 操作单元格
+                    const actionCell = document.createElement('td');
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.className = 'delete-btn';
+                    deleteBtn.textContent = '删除';
+                    deleteBtn.dataset.index = allImages.findIndex(item => item.id === image.id);
+                    actionCell.appendChild(deleteBtn);
+                    row.appendChild(actionCell);
+                    
+                    fragment.appendChild(row);
+                });
+                
+                // 清空表格并添加新内容
+                tableBody.innerHTML = '';
+                tableBody.appendChild(fragment);
+                
+                // 更新分页信息
+                updatePagination();
+                
+                // 添加事件监听器
+                addEventListeners();
+                
+                // 高亮搜索结果
+                highlightSearchResults();
+            }
+
+            // 更新分页信息
+            function updatePagination() {
+                const totalPages = Math.ceil(filteredImages.length / itemsPerPage);
+                pageInfo.querySelector('span').textContent = `第 ${currentPage} 页，共 ${totalPages} 页`;
+                
+                // 清空页码按钮
+                pageNumbers.innerHTML = '';
+                
+                // 添加上一页按钮
+                const prevBtn = document.createElement('button');
+                prevBtn.className = 'page-btn';
+                prevBtn.textContent = '上一页';
+                prevBtn.disabled = currentPage === 1;
+                prevBtn.addEventListener('click', function() {
+                    if (currentPage > 1) {
+                        currentPage--;
+                        updateTable();
+                    }
+                });
+                pageNumbers.appendChild(prevBtn);
+                
+                // 添加页码按钮
+                if (totalPages <= 6) {
+                    // 显示所有页码
+                    for (let i = 1; i <= totalPages; i++) {
+                        const pageBtn = document.createElement('span');
+                        pageBtn.className = `page-number ${i === currentPage ? 'active' : ''}`;
+                        pageBtn.textContent = i;
+                        pageBtn.addEventListener('click', function() {
+                            currentPage = i;
+                            updateTable();
+                        });
+                        pageNumbers.appendChild(pageBtn);
+                    }
+                } else {
+                    // 显示部分页码
+                    if (currentPage <= 3) {
+                        // 显示前5页和最后一页
+                        for (let i = 1; i <= 5; i++) {
+                            const pageBtn = document.createElement('span');
+                            pageBtn.className = `page-number ${i === currentPage ? 'active' : ''}`;
+                            pageBtn.textContent = i;
+                            pageBtn.addEventListener('click', function() {
+                                currentPage = i;
+                                updateTable();
+                            });
+                            pageNumbers.appendChild(pageBtn);
+                        }
+                        
+                        // 添加省略号
+                        const ellipsis = document.createElement('span');
+                        ellipsis.className = 'page-ellipsis';
+                        ellipsis.textContent = '...';
+                        pageNumbers.appendChild(ellipsis);
+                        
+                        // 添加最后一页
+                        const lastPage = document.createElement('span');
+                        lastPage.className = 'page-number';
+                        lastPage.textContent = totalPages;
+                        lastPage.addEventListener('click', function() {
+                            currentPage = totalPages;
+                            updateTable();
+                        });
+                        pageNumbers.appendChild(lastPage);
+                    } else if (currentPage >= totalPages - 2) {
+                        // 显示第一页和后5页
+                        const firstPage = document.createElement('span');
+                        firstPage.className = 'page-number';
+                        firstPage.textContent = 1;
+                        firstPage.addEventListener('click', function() {
+                            currentPage = 1;
+                            updateTable();
+                        });
+                        pageNumbers.appendChild(firstPage);
+                        
+                        // 添加省略号
+                        const ellipsis = document.createElement('span');
+                        ellipsis.className = 'page-ellipsis';
+                        ellipsis.textContent = '...';
+                        pageNumbers.appendChild(ellipsis);
+                        
+                        for (let i = totalPages - 4; i <= totalPages; i++) {
+                            const pageBtn = document.createElement('span');
+                            pageBtn.className = `page-number ${i === currentPage ? 'active' : ''}`;
+                            pageBtn.textContent = i;
+                            pageBtn.addEventListener('click', function() {
+                                currentPage = i;
+                                updateTable();
+                            });
+                            pageNumbers.appendChild(pageBtn);
+                        }
+                    } else {
+                        // 显示当前页前后的两页
+                        const firstPage = document.createElement('span');
+                        firstPage.className = 'page-number';
+                        firstPage.textContent = 1;
+                        firstPage.addEventListener('click', function() {
+                            currentPage = 1;
+                            updateTable();
+                        });
+                        pageNumbers.appendChild(firstPage);
+                        
+                        // 添加省略号
+                        const ellipsis1 = document.createElement('span');
+                        ellipsis1.className = 'page-ellipsis';
+                        ellipsis1.textContent = '...';
+                        pageNumbers.appendChild(ellipsis1);
+                        
+                        // 显示当前页前后的两页
+                        for (let i = currentPage - 2; i <= currentPage + 2; i++) {
+                            if (i > 1 && i < totalPages) {
+                                const pageBtn = document.createElement('span');
+                                pageBtn.className = `page-number ${i === currentPage ? 'active' : ''}`;
+                                pageBtn.textContent = i;
+                                pageBtn.addEventListener('click', function() {
+                                    currentPage = i;
+                                    updateTable();
+                                });
+                                pageNumbers.appendChild(pageBtn);
+                            }
+                        }
+                        
+                        // 添加省略号
+                        const ellipsis2 = document.createElement('span');
+                        ellipsis2.className = 'page-ellipsis';
+                        ellipsis2.textContent = '...';
+                        pageNumbers.appendChild(ellipsis2);
+                        
+                        // 添加最后一页
+                        const lastPage = document.createElement('span');
+                        lastPage.className = 'page-number';
+                        lastPage.textContent = totalPages;
+                        lastPage.addEventListener('click', function() {
+                            currentPage = totalPages;
+                            updateTable();
+                        });
+                        pageNumbers.appendChild(lastPage);
+                    }
+                }
+                
+                // 添加下一页按钮
+                const nextBtn = document.createElement('button');
+                nextBtn.className = 'page-btn';
+                nextBtn.textContent = '下一页';
+                nextBtn.disabled = currentPage === totalPages || totalPages === 0;
+                nextBtn.addEventListener('click', function() {
+                    if (currentPage < totalPages) {
+                        currentPage++;
+                        updateTable();
+                    }
+                });
+                pageNumbers.appendChild(nextBtn);
+                
+                // 更新跳转输入框
+                pageJumpInput.value = '';
+                pageJumpInput.max = totalPages;
+            }
+
+            // 添加事件监听器
+            function addEventListeners() {
+                // 缩略图悬停预览
+                document.querySelectorAll('.thumbnail').forEach(img => {
+                    img.addEventListener('mouseenter', function() {
+                        clearTimeout(previewTimeout);
+                        previewImg.src = this.dataset.full;
+                        previewContainer.classList.add('show');
+                    });
+                    
+                    img.addEventListener('mouseleave', function() {
+                        previewTimeout = setTimeout(() => {
+                            previewContainer.classList.remove('show');
+                        }, 300);
+                    });
+                });
+                
+                // 备注输入变化
+                document.querySelectorAll('.notes-input').forEach(input => {
+                    input.addEventListener('change', function() {
+                        const index = parseInt(this.dataset.index);
+                        if (index >= 0 && index < allImages.length) {
+                            allImages[index].notes = this.value;
+                            saveImages();
+                        }
+                    });
+                });
+                
+                // 删除按钮
+                document.querySelectorAll('.delete-btn').forEach(btn => {
+                    btn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        deleteIndex = parseInt(this.dataset.index);
+                        if (deleteIndex >= 0 && deleteIndex < allImages.length) {
+                            confirmMessage.textContent = `确定要删除图片 "${allImages[deleteIndex].name}" 吗？`;
+                            confirmDialog.classList.add('show');
+                        }
+                    });
+                });
+            }
+
+            // 高亮搜索结果
+            function highlightSearchResults() {
+                const searchTerm = currentSearchTerm.toLowerCase();
+                if (!searchTerm) return;
+                
+                document.querySelectorAll('.name-cell').forEach(cell => {
+                    const text = cell.textContent.toLowerCase();
+                    if (text.includes(searchTerm)) {
+                        cell.innerHTML = cell.textContent.replace(
+                            new RegExp(searchTerm, 'gi'),
+                            match => `<span class="highlight">${match}</span>`
+                        );
+                    }
+                });
+                
+                document.querySelectorAll('.notes-input').forEach(input => {
+                    const text = input.value.toLowerCase();
+                    if (text.includes(searchTerm)) {
+                        input.value = input.value; // 重置以防重复高亮
+                        const highlightedText = input.value.replace(
+                            new RegExp(searchTerm, 'gi'),
+                            match => `<span class="highlight">${match}</span>`
+                        );
+                        // 创建一个临时元素来获取HTML
+                        const temp = document.createElement('div');
+                        temp.innerHTML = highlightedText;
+                        // 只高亮文本，不实际改变输入框内容
+                        input.style.boxShadow = '0 0 0 2px #fffacd';
+                        setTimeout(() => {
+                            input.style.boxShadow = 'none';
+                        }, 1000);
+                    }
+                });
+            }
+
+            // 上传图片处理
+            function handleFileUpload(files) {
+                if (!files || files.length === 0) return;
+                
+                // 使用Promise.all处理多个文件上传
+                const uploadPromises = Array.from(files).map(file => {
+                    return new Promise((resolve) => {
+                        if (!file.type.match('image.*')) {
+                            alert('请选择图片文件: ' + file.name);
+                            resolve(null);
+                            return;
+                        }
+                        
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            // 创建缩略图
+                            const img = new Image();
+                            img.onload = function() {
+                                // 创建缩略图
+                                const canvas = document.createElement('canvas');
+                                const ctx = canvas.getContext('2d');
+                                canvas.width = 40;
+                                canvas.height = 40;
+                                ctx.drawImage(img, 0, 0, 40, 40);
+                                const thumbnail = canvas.toDataURL('image/jpeg');
+                                
+                                // 创建大图
+                                const maxSize = 800;
+                                let width = img.width;
+                                let height = img.height;
+                                
+                                if (width > height && width > maxSize) {
+                                    height *= maxSize / width;
+                                    width = maxSize;
+                                } else if (height > maxSize) {
+                                    width *= maxSize / height;
+                                    height = maxSize;
+                                }
+                                
+                                const bigCanvas = document.createElement('canvas');
+                                const bigCtx = bigCanvas.getContext('2d');
+                                bigCanvas.width = width;
+                                bigCanvas.height = height;
+                                bigCtx.drawImage(img, 0, 0, width, height);
+                                const fullImage = bigCanvas.toDataURL('image/jpeg');
+                                
+                                // 添加到数据
+                                const now = new Date();
+                                const uploadTime = `${now.getFullYear()}-${(now.getMonth()+1).toString().padStart(2, '0')}-${now.getDate().toString().padStart(2, '0')} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+                                
+                                resolve({
+                                    name: file.name,
+                                    thumbnail: thumbnail,
+                                    full: fullImage,
+                                    uploadTime: uploadTime,
+                                    notes: '',
+                                    dateObj: now
+                                });
+                            };
+                            img.src = e.target.result;
+                        };
+                        reader.readAsDataURL(file);
+                    });
+                });
+                
+                // 所有文件处理完成后更新界面
+                Promise.all(uploadPromises).then(results => {
+                    const newImages = results.filter(img => img !== null);
+                    if (newImages.length > 0) {
+                        allImages.unshift(...newImages);
+                        saveImages();
+                        applyFilters();
+                    }
+                });
+            }
+
+            // 初始化年份选择器
+            function initYearPicker() {
+                yearList.innerHTML = '';
+                const currentYear = new Date().getFullYear();
+                for (let year = currentYear; year >= currentYear - 10; year--) {
+                    const yearItem = document.createElement('div');
+                    yearItem.className = 'date-picker-item';
+                    yearItem.textContent = year;
+                    yearItem.dataset.year = year;
+                    yearItem.addEventListener('click', function() {
+                        document.querySelectorAll('#yearList .date-picker-item').forEach(item => {
+                            item.classList.remove('active');
+                        });
+                        this.classList.add('active');
+                        currentFilter = 'year:' + year;
+                        applyFilters();
+                        yearPicker.classList.remove('show');
+                    });
+                    yearList.appendChild(yearItem);
+                }
+            }
+            
+            // 初始化月份选择器
+            function initMonthPicker() {
+                monthList.innerHTML = '';
+                const monthNames = ['一月', '二月', '三月', '四月', '五月', '六月', 
+                                   '七月', '八月', '九月', '十月', '十一月', '十二月'];
+                monthNames.forEach((month, index) => {
+                    const monthItem = document.createElement('div');
+                    monthItem.className = 'date-picker-item';
+                    monthItem.textContent = month;
+                    monthItem.dataset.month = index + 1;
+                    monthItem.addEventListener('click', function() {
+                        document.querySelectorAll('#monthList .date-picker-item').forEach(item => {
+                            item.classList.remove('active');
+                        });
+                        this.classList.add('active');
+                        const selectedYear = document.querySelector('#yearList .date-picker-item.active')?.dataset.year || new Date().getFullYear();
+                        currentFilter = `month:${selectedYear}:${index + 1}`;
+                        applyFilters();
+                        monthPicker.classList.remove('show');
+                    });
+                    monthList.appendChild(monthItem);
+                });
+            }
+            
+            // 渲染日期选择器
+            function renderDayPicker(year, month) {
+                dayList.innerHTML = '';
+                dayPickerTitle.textContent = `${year}年${month + 1}月`;
+                
+                const firstDay = new Date(year, month, 1);
+                const lastDay = new Date(year, month + 1, 0);
+                const daysInMonth = lastDay.getDate();
+                const startingDay = firstDay.getDay();
+                
+                // 添加上个月的日期
+                const prevMonthLastDay = new Date(year, month, 0).getDate();
+                for (let i = 0; i < startingDay; i++) {
+                    const dayItem = document.createElement('div');
+                    dayItem.className = 'date-picker-item other-month';
+                    dayItem.textContent = prevMonthLastDay - startingDay + i + 1;
+                    dayList.appendChild(dayItem);
+                }
+                
+                // 添加当前月的日期
+                const today = new Date();
+                for (let day = 1; day <= daysInMonth; day++) {
+                    const dayItem = document.createElement('div');
+                    dayItem.className = 'date-picker-item';
+                    if (year === today.getFullYear() && month === today.getMonth() && day === today.getDate()) {
+                        dayItem.classList.add('active');
+                    }
+                    dayItem.textContent = day;
+                    dayItem.addEventListener('click', function() {
+                        document.querySelectorAll('#dayList .date-picker-item').forEach(item => {
+                            item.classList.remove('active');
+                        });
+                        this.classList.add('active');
+                        currentFilter = `day:${year}:${month + 1}:${day}`;
+                        applyFilters();
+                        dayPicker.classList.remove('show');
+                    });
+                    dayList.appendChild(dayItem);
+                }
+                
+                // 添加下个月的日期
+                const daysToAdd = 42 - (daysInMonth + startingDay); // 6行x7天
+                for (let i = 1; i <= daysToAdd; i++) {
+                    const dayItem = document.createElement('div');
+                    dayItem.className = 'date-picker-item other-month';
+                    dayItem.textContent = i;
+                    dayList.appendChild(dayItem);
+                }
+            }
+            
+            // 渲染周数选择器
+            function renderWeekPicker(year) {
+                weekList.innerHTML = '';
+                weekPickerTitle.textContent = `${year}年`;
+                
+                // 计算这一年有多少周
+                const lastDay = new Date(year, 11, 31);
+                const weekCount = getWeekNumber(lastDay) === 1 ? getWeekNumber(new Date(year, 11, 31 - 7)) : getWeekNumber(lastDay);
+                
+                for (let week = 1; week <= weekCount; week++) {
+                    const weekItem = document.createElement('div');
+                    weekItem.className = 'date-picker-item';
+                    weekItem.textContent = `第${week}周`;
+                    weekItem.dataset.week = week;
+                    weekItem.addEventListener('click', function() {
+                        document.querySelectorAll('#weekList .date-picker-item').forEach(item => {
+                            item.classList.remove('active');
+                        });
+                        this.classList.add('active');
+                        currentFilter = `week:${year}:${week}`;
+                        applyFilters();
+                        weekPicker.classList.remove('show');
+                    });
+                    weekList.appendChild(weekItem);
+                }
+            }
+            
+            // 获取周数
+            function getWeekNumber(date) {
+                date = new Date(date);
+                date.setHours(0, 0, 0, 0);
+                date.setDate(date.getDate() + 3 - (date.getDay() + 6) % 7);
+                const week1 = new Date(date.getFullYear(), 0, 4);
+                return 1 + Math.round(((date - week1) / 86400000 + week1.getDay() + 1) / 7);
+            }
+
+            // 处理批量删除
+            function handleBulkDelete() {
+                let deleteCount = 0;
+                const totalPagesBeforeDelete = Math.ceil(allImages.length / itemsPerPage);
+                const currentPageBeforeDelete = currentPage;
+
+                switch(currentDeleteType) {
+                    case 'page':
+                        const pageToDelete = parseInt(deletePageInput.value);
+                        if (!pageToDelete || pageToDelete < 1 || pageToDelete > totalPagesBeforeDelete) {
+                            alert('请输入有效的页码');
+                            return;
+                        }
+                        const startIdx = (pageToDelete - 1) * itemsPerPage;
+                        const endIdx = Math.min(startIdx + itemsPerPage, allImages.length);
+                        deleteCount = endIdx - startIdx;
+                        allImages.splice(startIdx, deleteCount);
+                        
+                        // 如果删除的是当前页之前的页面，调整当前页码
+                        if (pageToDelete < currentPageBeforeDelete) {
+                            const pagesDeleted = Math.ceil(deleteCount / itemsPerPage);
+                            currentPage = Math.max(1, currentPageBeforeDelete - pagesDeleted);
+                        }
+                        break;
+
+                    case 'current':
+                        const currentStart = (currentPageBeforeDelete - 1) * itemsPerPage;
+                        const currentEnd = Math.min(currentStart + itemsPerPage, allImages.length);
+                        deleteCount = currentEnd - currentStart;
+                        allImages.splice(currentStart, deleteCount);
+                        break;
+
+                    case 'all':
+                        deleteCount = allImages.length;
+                        allImages = [];
+                        currentPage = 1; // 删除全部后回到第一页
+                        break;
+                }
+
+                saveImages();
+                applyFilters(true); // 保持当前页码
+                confirmDialog.classList.remove('show');
+                alert(`已删除 ${deleteCount} 条记录`);
+            }
+
+            // 初始化事件监听
+            function initEventListeners() {
+                // 上传按钮点击
+                uploadSidebarItem.addEventListener('click', function() {
+                    uploadArea.classList.toggle('visible');
+                    searchArea.style.display = 'none';
+                    searchInput.value = '';
+                    currentSearchTerm = '';
+                    applyFilters();
+                });
+                
+                // 搜索按钮点击
+                searchSidebarItem.addEventListener('click', function() {
+                    searchArea.style.display = 'block';
+                    uploadArea.classList.remove('visible');
+                    searchInput.focus();
+                });
+                
+                // 上传按钮点击
+                uploadBtn.addEventListener('click', function() {
+                    fileInput.click();
+                });
+                
+                // 文件选择变化
+                fileInput.addEventListener('change', function() {
+                    if (this.files.length > 0) {
+                        handleFileUpload(this.files);
+                        this.value = '';
+                    }
+                });
+                
+                // 拖放上传
+                uploadContainer.addEventListener('dragover', function(e) {
+                    e.preventDefault();
+                    this.style.borderColor = '#3498db';
+                    this.style.backgroundColor = '#f8f9fa';
+                });
+                
+                uploadContainer.addEventListener('dragleave', function() {
+                    this.style.borderColor = '#bdc3c7';
+                    this.style.backgroundColor = '#fff';
+                });
+                
+                uploadContainer.addEventListener('drop', function(e) {
+                    e.preventDefault();
+                    this.style.borderColor = '#bdc3c7';
+                    this.style.backgroundColor = '#fff';
+                    
+                    if (e.dataTransfer.files.length > 0) {
+                        handleFileUpload(e.dataTransfer.files);
+                    }
+                });
+                
+                // 点击任意位置关闭预览
+                document.addEventListener('click', function(e) {
+                    if (previewContainer.classList.contains('show') && e.target !== previewImg) {
+                        previewContainer.classList.remove('show');
+                    }
+                    
+                    if (!e.target.closest('.date-picker') && !e.target.closest('.date-filter-item')) {
+                        yearPicker.classList.remove('show');
+                        monthPicker.classList.remove('show');
+                        dayPicker.classList.remove('show');
+                        weekPicker.classList.remove('show');
+                    }
+                });
+                
+                // 预览区域鼠标事件
+                previewContainer.addEventListener('mouseenter', function() {
+                    clearTimeout(previewTimeout);
+                });
+                
+                previewContainer.addEventListener('mouseleave', function() {
+                    this.classList.remove('show');
+                });
+                
+                // 搜索功能
+                searchInput.addEventListener('input', function() {
+                    currentSearchTerm = this.value;
+                    applyFilters();
+                });
+                
+                // 搜索框失去焦点时隐藏
+                searchInput.addEventListener('blur', function() {
+                    if (this.value === '') {
+                        setTimeout(() => {
+                            searchArea.style.display = 'none';
+                        }, 200);
+                    }
+                });
+                
+                // 日期筛选按钮点击
+                dateFilterItem.addEventListener('click', function() {
+                    this.classList.toggle('active');
+                });
+                
+                // 日期筛选项点击
+                dateFilterItems.forEach(item => {
+                    item.addEventListener('click', function() {
+                        const filterType = this.dataset.filter;
+                        
+                        if (filterType === 'year') {
+                            const rect = this.getBoundingClientRect();
+                            yearPicker.style.top = `${rect.top}px`;
+                            yearPicker.classList.add('show');
+                            monthPicker.classList.remove('show');
+                            dayPicker.classList.remove('show');
+                            weekPicker.classList.remove('show');
+                        } 
+                        else if (filterType === 'month') {
+                            const rect = this.getBoundingClientRect();
+                            monthPicker.style.top = `${rect.top}px`;
+                            monthPicker.classList.add('show');
+                            yearPicker.classList.remove('show');
+                            dayPicker.classList.remove('show');
+                            weekPicker.classList.remove('show');
+                        }
+                        else if (filterType === 'day') {
+                            const rect = this.getBoundingClientRect();
+                            dayPicker.style.top = `${rect.top}px`;
+                            renderDayPicker(currentDayYear, currentDayMonth);
+                            dayPicker.classList.add('show');
+                            yearPicker.classList.remove('show');
+                            monthPicker.classList.remove('show');
+                            weekPicker.classList.remove('show');
+                        }
+                        else if (filterType === 'week') {
+                            const rect = this.getBoundingClientRect();
+                            weekPicker.style.top = `${rect.top}px`;
+                            renderWeekPicker(currentWeekYear);
+                            weekPicker.classList.add('show');
+                            yearPicker.classList.remove('show');
+                            monthPicker.classList.remove('show');
+                            dayPicker.classList.remove('show');
+                        }
+                        else {
+                            yearPicker.classList.remove('show');
+                            monthPicker.classList.remove('show');
+                            dayPicker.classList.remove('show');
+                            weekPicker.classList.remove('show');
+                            dateFilterItems.forEach(i => i.classList.remove('active'));
+                            this.classList.add('active');
+                            currentFilter = this.dataset.filter;
+                            applyFilters();
+                        }
+                    });
+                });
+                
+                // 月份导航按钮
+                prevMonthBtn.addEventListener('click', function() {
+                    currentDayMonth--;
+                    if (currentDayMonth < 0) {
+                        currentDayMonth = 11;
+                        currentDayYear--;
+                    }
+                    renderDayPicker(currentDayYear, currentDayMonth);
+                });
+                
+                nextMonthBtn.addEventListener('click', function() {
+                    currentDayMonth++;
+                    if (currentDayMonth > 11) {
+                        currentDayMonth = 0;
+                        currentDayYear++;
+                    }
+                    renderDayPicker(currentDayYear, currentDayMonth);
+                });
+                
+                // 年份导航按钮
+                prevYearBtn.addEventListener('click', function() {
+                    currentWeekYear--;
+                    renderWeekPicker(currentWeekYear);
+                });
+                
+                nextYearBtn.addEventListener('click', function() {
+                    currentWeekYear++;
+                    renderWeekPicker(currentWeekYear);
+                });
+                
+                // 排序按钮点击
+                sortTimeBtn.addEventListener('click', function() {
+                    sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+                    sortImages();
+                    applyFilters();
+                });
+                
+                // 确认对话框按钮
+                cancelDelete.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    confirmDialog.classList.remove('show');
+                    deleteIndex = -1;
+                    currentDeleteType = '';
+                });
+                
+                confirmDelete.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    if (deleteIndex >= 0) {
+                        // 记录删除前的当前页码
+                        const currentPageBeforeDelete = currentPage;
+                        
+                        // 执行删除
+                        allImages.splice(deleteIndex, 1);
+                        saveImages();
+                        
+                        // 应用筛选但保持页码
+                        applyFilters(true);
+                        
+                        // 如果当前页没有数据了，且不是第一页，则自动跳到前一页
+                        const startIdx = (currentPage - 1) * itemsPerPage;
+                        if (filteredImages.length <= startIdx && currentPage > 1) {
+                            currentPage--;
+                            updateTable();
+                        }
+                        
+                        confirmDialog.classList.remove('show');
+                        deleteIndex = -1;
+                    } else if (currentDeleteType) {
+                        // 批量删除
+                        handleBulkDelete();
+                    }
+                });
+                
+                // 阻止对话框内容点击事件冒泡
+                document.querySelector('.confirm-content').addEventListener('click', function(e) {
+                    e.stopPropagation();
+                });
+                
+                // 页面跳转输入框
+                pageJumpInput.addEventListener('keyup', function(e) {
+                    if (e.key === 'Enter') {
+                        jumpToPage();
+                    }
+                });
+                
+                // 页面跳转按钮
+                pageJumpBtn.addEventListener('click', jumpToPage);
+                
+                function jumpToPage() {
+                    const pageNum = parseInt(pageJumpInput.value);
+                    const totalPages = Math.ceil(filteredImages.length / itemsPerPage);
+                    
+                    if (!isNaN(pageNum) && pageNum >= 1 && pageNum <= totalPages) {
+                        currentPage = pageNum;
+                        updateTable();
+                    } else {
+                        alert(`请输入有效的页码 (1-${totalPages})`);
+                    }
+                    pageJumpInput.value = '';
+                }
+
+                // 批量删除按钮
+                deletePageBtn.addEventListener('click', function() {
+                    currentDeleteType = 'page';
+                    if (!deletePageInput.value) {
+                        alert('请输入要删除的页码');
+                        return;
+                    }
+                    confirmMessage.textContent = `确定要删除第 ${deletePageInput.value} 页的所有记录吗？`;
+                    confirmDialog.classList.add('show');
+                });
+
+                deleteCurrentPageBtn.addEventListener('click', function() {
+                    currentDeleteType = 'current';
+                    confirmMessage.textContent = `确定要删除当前页（第 ${currentPage} 页）的所有记录吗？`;
+                    confirmDialog.classList.add('show');
+                });
+
+                deleteAllBtn.addEventListener('click', function() {
+                    currentDeleteType = 'all';
+                    confirmMessage.textContent = '确定要删除所有记录吗？此操作不可恢复！';
+                    confirmDialog.classList.add('show');
+                });
+            }
+
+            // 初始化
+            loadImages();
+            initYearPicker();
+            initMonthPicker();
+            renderDayPicker(currentDayYear, currentDayMonth);
+            renderWeekPicker(currentWeekYear);
+            initEventListeners();
+        });
+    </script>
+</body>
+</html>
